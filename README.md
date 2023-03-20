@@ -1,4 +1,5 @@
 # web_scraping
-Pulling http links from allrecipes.com
+
 
 - `healthy_recipes.py` This program will pull http links for healthy recipes from allrecipes.com
+- `science_physics.py` This program will provide all article tiltles and their links from https://www.science.org The program will also import all data in a csv file.
