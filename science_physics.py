@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import requests
+import csv
 from bs4 import BeautifulSoup
 
 class ScienceDotOrgScraper():
@@ -62,5 +63,13 @@ class ScienceDotOrgScraper():
 # instantiate a new ScienceDotOrgScraper() object and run its perform() method call.
 my_scraper = ScienceDotOrgScraper()
 text_data = my_scraper.perform()
-for item in text_data:
-    print(item)
+
+# with open here
+
+with open('science_data.csv', 'w', newline='') as csvfile:
+    fieldnames = ['header_text']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer.writeheader()
+    for item in text_data:
+        writer.writerow({'header_text': item})
+        
