@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 class ScienceDotOrgScraper():
     def __init__(self):
         self.base_url = 'https://www.science.org/topic/category/physics?'
+        self.homepage_url = 'https://www.science.org'
 
     def get_soup(self, url):
         response = requests.get(url)
@@ -14,13 +15,6 @@ class ScienceDotOrgScraper():
             return BeautifulSoup(response.text, 'html.parser')
         else:
             return f"Error: HTTP Code: {response.status_code}"
-    
-    def get_h2_text_from_page(self, url):
-        soup = self.get_soup(url)
-        title=soup.find_all('h2', class_='article-title sans-serif text-deep-gray mb-1')
-        h2_tag_text_list = [ tag.text for tag in title ]
-        return h2_tag_text_list
-
 
     def get_max_start_page(self):
         
@@ -40,11 +34,10 @@ class ScienceDotOrgScraper():
         page_size_bar_len = len(page_size_list_item_tags)
         max_page_ele = page_size_bar_len - 2
         max_start_page = page_size_list_item_tags[max_page_ele].text
-
         return int(max_start_page)
 
     def perform(self):
-        h2_text_data = []
+        h2_data = []
         # first do base request so we can get the startPage size that we need.
         # we will use this in the startPage param
         max_start_page_size = self.get_max_start_page()
@@ -52,24 +45,29 @@ class ScienceDotOrgScraper():
         for start_page in start_page_range:
             url = f'https://www.science.org/topic/category/physics?startPage={start_page}&pageSize=100'
             print(f"Sending Request to: {url}")
-            h2_text = self.get_h2_text_from_page(url)
-            h2_text_data.append(h2_text)
+            soup = self.get_soup(url)
+            # each a h2 tag has a title and href attribute we can use to get the data in one loop.
+            try:
+                for h2 in soup.find_all('h2'):
+                    a = h2.find('a')
+                    title = a['title']
+                    relative_link = a.get('href', None)
+                    link = self.homepage_url + relative_link
+                    h2_data.append({'title': title, 'link': link })
+            except TypeError as e:
+                pass
 
-        # flatten the list 
-        h2_text = [item for sublist in h2_text_data for item in sublist]
-
-        return h2_text
-    
+        return h2_data
+            
 # instantiate a new ScienceDotOrgScraper() object and run its perform() method call.
 my_scraper = ScienceDotOrgScraper()
-text_data = my_scraper.perform()
+data = my_scraper.perform()
 
-# with open here
+# CSV writing:
 
 with open('science_data.csv', 'w', newline='') as csvfile:
-    fieldnames = ['header_text']
+    fieldnames = ['title', 'link']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
-    for item in text_data:
-        writer.writerow({'header_text': item})
-        
+    for data_dict in data:
+        writer.writerow(data_dict)
